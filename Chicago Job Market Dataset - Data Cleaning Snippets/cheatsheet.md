@@ -151,10 +151,16 @@ concatenated_df_horizontal = pd.concat([df1, df2], axis=1)
 ```python
 # Save cleaned dataset to a new CSV file
 df.to_csv('cleaned_dataset.csv', index=False)
+
+# Save to Excel
+df.to_excel('cleaned_data.xlsx', index=False)
+
+# Save to JSON
+df.to_json('cleaned_data.json', orient='records', lines=True)
 ```
 
 
-## Additional Tips
+## Best Practices / Tips
 - Always make a copy of your original dataset before cleaning (`df_original = df.copy()`).
 - Document your steps and transformations for reproducibility.
 - Consult Pandas documentation and community forums for advanced techniques and specific issues.
