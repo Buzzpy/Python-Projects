@@ -50,7 +50,7 @@ df.rename(columns={'old_name1': 'new_name1', 'old_name2': 'new_name2'}, inplace=
 ```
 
 
-## Step 4: Handle Missing Data
+## Step 5: Handle Missing Data
 
 ```python
 # Drop rows with missing values
@@ -65,7 +65,7 @@ df.fillna(df.median())
 df.fillna(df.mode().iloc[0])
 ```
 
-## Step 5: Handle Duplicates
+## Step 6: Handle Duplicates
 
 ```python
 # Drop duplicates
@@ -75,7 +75,7 @@ df.drop_duplicates()
 df.duplicated().sum()
 ```
 
-## Step 6: Correct Data Types
+## Step 7: Correct Data Types
 
 ```python
 # Convert a column to numeric
@@ -88,7 +88,7 @@ df['date_column'] = pd.to_datetime(df['date_column'])
 df['category_column'] = df[‘category_column'].astype('category')
 ```
 
-## Step 7: Handle Outliers
+## Step 8: Handle Outliers
 Method I: For datasets with a variety of data with no connections between datapoints.
 ```python
 mean_salary = df['column'].mean() #Find the mean
@@ -111,7 +111,7 @@ df = df[(df['column'] >= Q1 - 1.5 * IQR) & (df['column'] <= Q3 + 1.5 * IQR)]
 ```
 
 
-## Step 8: Text Cleaning (if applicable)
+## Step 9: Text Cleaning (if applicable)
 
 ```python
 # Convert text to lowercase
@@ -125,13 +125,13 @@ df['text_column'] = df['text_column'].str.replace('[^a-zA-Z0-9]', ' ‘)
 
 ```
 
-## Step 9: Feature Engineering (if applicable)
+## Step 10: Feature Engineering (if applicable)
 
 ```python
 # Create new columns from existing ones
 df['new_column'] = df['existing_column'].apply(lambda x: function(x))
 ```
-## Step 10: Combining DataFrames (if applicable)
+## Step 11: Combining DataFrames (if applicable)
 ### Merging Dataframes
 ```python
 merged_df = pd.merge(df1, df2, on='column')
@@ -146,7 +146,7 @@ concatenated_df_horizontal = pd.concat([df1, df2], axis=1)
 
 ```
 
-## Step 11: Save Cleaned Data
+## Step 12: Save Cleaned Data
 
 ```python
 # Save cleaned dataset to a new CSV file
