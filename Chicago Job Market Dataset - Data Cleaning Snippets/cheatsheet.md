@@ -38,11 +38,11 @@ df.isnull().sum()
 ### Select/Remove Columns
 ```python
 #selection of columns
-columns_to_keep = ['olumn 1', 'column 2', 'column 3']
+columns_to_keep = ['column 1', 'column 2', 'column 3']
 df = df[columns_to_keep]
 
 #deletion of unwanted columns
-df.drop(['column 1', 'olumn 1'], inplace=True)
+df.drop(['column 1', 'column 1'], inplace=True)
 ```
 ### Rename Columns
 ```python
