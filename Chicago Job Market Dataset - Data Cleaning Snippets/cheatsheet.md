@@ -32,8 +32,22 @@ df.dtypes
 
 # Check for missing values
 df.isnull().sum()
-```
 
+```
+## Step 4: Cleaning Columns
+### Select/Remove Columns
+```python
+#selection of columns
+columns_to_keep = ['olumn 1', 'column 2', 'column 3']
+df = df[columns_to_keep]
+
+#deletion of unwanted columns
+df.drop(['column 1', 'olumn 1'], inplace=True)
+```
+### Rename Columns
+```python
+df.rename(columns={'old_name1': 'new_name1', 'old_name2': 'new_name2'}, inplace=True)
+```
 
 
 ## Step 4: Handle Missing Data
@@ -117,8 +131,22 @@ df['text_column'] = df['text_column'].str.replace('[^a-zA-Z0-9]', ' ‘)
 # Create new columns from existing ones
 df['new_column'] = df['existing_column'].apply(lambda x: function(x))
 ```
+## Step 10: Combining DataFrames (if applicable)
+### Merging Dataframes
+```python
+merged_df = pd.merge(df1, df2, on='column')
+```
+### Concatenating DataFrames
+```python
+# Vertically (adding columns)
+concatenated_df_vertical = pd.concat([df1, df2], ignore_index=True)
 
-## Step 10: Save Cleaned Data
+# Hoizontally (adding rows)
+concatenated_df_horizontal = pd.concat([df1, df2], axis=1)
+
+```
+
+## Step 11: Save Cleaned Data
 
 ```python
 # Save cleaned dataset to a new CSV file
