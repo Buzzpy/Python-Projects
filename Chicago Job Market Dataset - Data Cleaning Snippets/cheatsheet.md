@@ -49,7 +49,6 @@ df.drop(['column 1', 'column 1'], inplace=True)
 df.rename(columns={'old_name1': 'new_name1', 'old_name2': 'new_name2'}, inplace=True)
 ```
 
-
 ## Step 5: Handle Missing Data
 
 ```python
@@ -131,6 +130,7 @@ df['text_column'] = df['text_column'].str.replace('[^a-zA-Z0-9]', ' ‘)
 # Create new columns from existing ones
 df['new_column'] = df['existing_column'].apply(lambda x: function(x))
 ```
+
 ## Step 11: Combining DataFrames (if applicable)
 ### Merging Dataframes
 ```python
