@@ -1,6 +1,6 @@
 
 # Data Cleaning with Python/Pandas Cheatsheet
-
+Sponsored by [Apify Technologies](https://apify.com/)
 ## Step 1: Import Libraries
 
 ```python
