@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import Toplevel
 from stellar_sdk import Keypair, Server, TransactionBuilder, Network, Asset
-from stellar_sdk.exceptions import NotFoundError
+from stellar_sdk.exceptions import NotFoundError # for better error descriptions
 
 class StellarWalletApp:
     def __init__(self, root):
