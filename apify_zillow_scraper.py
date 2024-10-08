@@ -1,53 +1,67 @@
-import httpx
-from bs4 import BeautifulSoup
-import apify
-import logging
-import asyncio
+"""This module defines the main entry point for the Apify Actor.
 
-logging.basicConfig(level=logging.INFO)
+Feel free to modify this file to suit your specific needs.
+
+To build Apify Actors, utilize the Apify SDK toolkit, read more at the official documentation:
+https://docs.apify.com/sdk/python
+"""
+
+from apify import Actor
+import httpx
+from lxml import html
+import asyncio
 
 async def fetch_properties(url, headers):
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
         if response.status_code != 200:
-            logging.error(f"Failed to fetch the HTML content. Status code: {response.status_code}")
+            Actor.log.error(f"Failed to fetch the HTML content. Status code: {response.status_code}")
             return []
 
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # Parsing the response content using lxml
+        tree = html.fromstring(response.content)
 
         properties = []
-        property_cards = soup.find_all('li', class_='ListItem-c11n-8-102-0__sc-13rwu5a-0')
-        # Extracting relevant info
+        # Using XPath to select property cards
+        property_cards = tree.xpath('//li[contains(@class, "ListItem-c11n-8-105-0")]')
+
         for card in property_cards:
             obj = {}
             try:
-                obj["Address"] = card.find('address', {'data-test': 'property-card-addr'}).text.strip()
-            except AttributeError:
+                # Address
+                obj["Address"] = card.xpath('.//a/address/text()')[0].strip()
+            except IndexError:
                 obj["Address"] = None
 
             try:
-                obj["Price"] = card.find('span', {'data-test': 'property-card-price'}).text.strip()
-            except AttributeError:
+                # Price
+                obj["Price"] = card.xpath('.//span[@data-test="property-card-price"]/text()')[0].strip()
+            except IndexError:
                 obj["Price"] = None
 
+            # Extracting and splitting Bds, Baths, and Sqft data
             try:
-                details = card.find('ul', class_='StyledPropertyCardHomeDetailsList-c11n-8-102-0__sc-1j0som5-0 exCsDV')
-                # Splitting data in the list
-                details_list = details.find_all('li') if details else []
-                obj["Bds"] = details_list[0].text.strip() if len(details_list) > 0 else None
-                obj["Baths"] = details_list[1].text.strip() if len(details_list) > 1 else None
-                obj["Sqft"] = details_list[2].text.strip() if len(details_list) > 2 else None
-            except AttributeError:
+                details = card.xpath('.//ul[contains(@class, "StyledPropertyCardHomeDetailsList-c11n-8-105-0__sc-1j0som5-0 ldtVy")]')
+                if details:
+                    details_list = details[0].xpath('.//li/b/text()')
+                    obj["Bds"] = details_list[0].strip() if len(details_list) > 0 else None
+                    obj["Baths"] = details_list[1].strip() if len(details_list) > 1 else None
+                    obj["Sqft"] = details_list[2].strip() if len(details_list) > 2 else None
+                else:
+                    obj["Bds"] = obj["Baths"] = obj["Sqft"] = None
+            except IndexError:
                 obj["Bds"] = obj["Baths"] = obj["Sqft"] = None
 
             properties.append(obj)
 
         return properties
 
-async def main():
-    async with apify.Actor:
-        input = await apify.Actor.get_input() or {}
-        base_url = input.get('url', 'https://www.zillow.com/new-york-ny/')
+async def main() -> None:
+    """Main entry point for the Apify Actor."""
+    async with Actor:
+        Actor.log.info('Starting the Zillow scraping actor...')
+
+        base_url = "https://www.zillow.com/new-york-ny/"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
             "Accept-Language": "en-US,en;q=0.9",
@@ -58,36 +72,29 @@ async def main():
 
         all_properties = []
         page_number = 1
+        properties_to_collect = 20
 
-        while len(all_properties) < 20:
+        while True:
             url = f"{base_url}?page={page_number}"
-            logging.info(f"Fetching page {page_number}...")
+            Actor.log.info(f"Fetching page {page_number}...")
             properties = await fetch_properties(url, headers)
 
             if not properties:
-                logging.info("No more properties found or unable to fetch page.")
+                Actor.log.info("No more properties found or unable to fetch page.")
                 break
 
-            # Filter out invalid entries
-            valid_properties = [p for p in properties if
-                                p["Address"] and p["Price"] and p["Bds"] and p["Baths"] and p["Sqft"] and 'None' not in (
-                                p["Address"], p["Price"], p["Bds"], p["Baths"], p["Sqft"])]
-
+            valid_properties = [p for p in properties if p["Address"] and p["Price"] and p["Bds"] and p["Baths"] and p["Sqft"]]
             all_properties.extend(valid_properties)
-            if len(all_properties) >= 20:
+
+            if len(all_properties) >= properties_to_collect:
                 break
 
             page_number += 1
-            await asyncio.sleep(2)  # Sleeping to avoid hitting the server too hard
+            await asyncio.sleep(2)
 
-        # Ensuring we have exactly 20 non-empty listings
-        all_properties = all_properties[:20]
+        # Log the total number of properties scraped
+        Actor.log.info(f"Successfully scraped {len(all_properties)} properties.")
 
-        # Save to Apify key-value store
-        await apify.Actor.push_data(all_properties)
-
-        logging.info("Scraping completed and data saved to Apify key-value store.")
-
-# Run the script
+# Running the script
 if __name__ == "__main__":
     asyncio.run(main())
