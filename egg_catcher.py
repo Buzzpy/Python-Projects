@@ -1,3 +1,4 @@
+CAN ANYONE MAKE LEVELS FOR THIS GAME?
 from itertools import cycle
 from random import randrange
 from tkinter import Canvas, Tk, messagebox, font
