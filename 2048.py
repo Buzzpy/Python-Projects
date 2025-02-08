@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import random
 
-GRID_SIZE = 4
+GRID_SIZE = 4 
 CELL_PADDING = 7
 FONT_STYLE = ('arial', 22, 'bold')
 
