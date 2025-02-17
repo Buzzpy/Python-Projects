@@ -11,6 +11,8 @@ class StellarWalletApp:
         self.root.geometry("500x700")
         self.root.resizable(False, False)
 
+        self.root.grid_columnconfigure(0, weight=1)
+
         # Style configurations
         self.style_config = {
             "label": {"font": ("Arial", 15, "bold")},
@@ -23,7 +25,7 @@ class StellarWalletApp:
         self.grid_config = {
             "padx": 10,
             "pady": (10, 5),
-            "sticky": "w"
+
         }
 
         # Create Widgets
