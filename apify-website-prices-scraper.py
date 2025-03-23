@@ -11,7 +11,7 @@ import asyncio
 
 async def save_current_data(data):
     try:
-        store = await Actor.open_key_value_store()  # Don't pass store name here
+        store = await Actor.open_key_value_store() 
         await store.set_value('historical_prices', data)
     except Exception as e:
         Actor.log.error(f"Error saving current data: {e}")
@@ -22,7 +22,6 @@ async def main():
         print("Starting eBay headphone scraper...")
         Actor.log.info("Starting eBay headphone scraper...")
 
-        # Get input from Apify
         actor_input = await Actor.get_input() or {}
         url = actor_input.get('url', 'https://www.ebay.com/b/Headphones/112529/bn_879608')
         max_items = actor_input.get('max_items', 10)
