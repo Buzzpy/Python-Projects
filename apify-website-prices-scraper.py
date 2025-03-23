@@ -1,4 +1,3 @@
-# writtend to run on Apify.com (it's free); not tested locally.
 import time
 import tempfile
 from selenium import webdriver
@@ -7,6 +6,16 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from apify import Actor
 import asyncio
+
+# Saving current price data to the key-value store
+
+async def save_current_data(data):
+    try:
+        store = await Actor.open_key_value_store()  # Don't pass store name here
+        await store.set_value('historical_prices', data)
+    except Exception as e:
+        Actor.log.error(f"Error saving current data: {e}")
+
 
 async def main():
     async with Actor:
@@ -29,7 +38,7 @@ async def main():
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument(
             "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
-        
+
         # Use a temporary directory to avoid user data directory conflicts
         temp_dir = tempfile.mkdtemp()
         options.add_argument(f'--user-data-dir={temp_dir}')
@@ -45,10 +54,6 @@ async def main():
             driver.get(url)
             time.sleep(5)  # Wait for page to load
 
-            # Log page source length for debugging
-            print(f"Page source length: {len(driver.page_source)}")
-            Actor.log.info(f"Page source length: {len(driver.page_source)}")
-
             # Find product items
             product_containers = driver.find_elements(By.CSS_SELECTOR, 'li.brwrvr__item-card.brwrvr__item-card--list')
             print(f"Found {len(product_containers)} product containers.")
@@ -60,7 +65,9 @@ async def main():
                 driver.quit()
                 return
 
+            current_data = {}
             items_found = 0
+
             for container in product_containers[:max_items]:
                 try:
                     name_elem = container.find_elements(By.CSS_SELECTOR, 'h3.textual-display.bsig__title__text')
@@ -74,15 +81,22 @@ async def main():
                         'price': price,
                         'url': url
                     }
+
+                    current_data[name] = price
                     items_found += 1
+
                     print(f"Item {items_found}: {name} - {price}")
                     Actor.log.info(f"Item {items_found}: {name} - {price}")
+
                     await Actor.push_data(item)
 
                 except Exception as e:
                     print(f"Error processing item: {e}")
                     Actor.log.error(f"Error processing item: {e}")
                     continue
+
+            # Save current prices to KVS
+            await save_current_data(current_data)
 
             print(f"Scraping completed. Total items scraped: {items_found}")
             Actor.log.info(f"Scraping completed. Total items scraped: {items_found}")
