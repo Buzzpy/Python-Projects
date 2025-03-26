@@ -7,11 +7,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 from apify import Actor
 import asyncio
 
-# Saving current price data to the key-value store
+# Saving current price data to the named key-value store
 
 async def save_current_data(data):
     try:
-        store = await Actor.open_key_value_store() 
+        store = await Actor.open_key_value_store(name='historical-prices')
         await store.set_value('historical_prices', data)
     except Exception as e:
         Actor.log.error(f"Error saving current data: {e}")
@@ -42,6 +42,8 @@ async def main():
         temp_dir = tempfile.mkdtemp()
         options.add_argument(f'--user-data-dir={temp_dir}')
 
+        driver = None
+
         try:
             driver = webdriver.Chrome(service=service, options=options)
             print("WebDriver initialized successfully.")
@@ -61,7 +63,6 @@ async def main():
             if not product_containers:
                 print("No product containers found. Check CSS selectors or page structure.")
                 Actor.log.error("No product containers found. Check CSS selectors or page structure.")
-                driver.quit()
                 return
 
             current_data = {}
@@ -94,7 +95,7 @@ async def main():
                     Actor.log.error(f"Error processing item: {e}")
                     continue
 
-            # Save current prices to KVS
+            # Save current prices to named KVS
             await save_current_data(current_data)
 
             print(f"Scraping completed. Total items scraped: {items_found}")
@@ -105,9 +106,10 @@ async def main():
             Actor.log.error(f"Critical error: {e}")
 
         finally:
-            driver.quit()
-            print("WebDriver closed.")
-            Actor.log.info("WebDriver closed.")
+            if driver:
+                driver.quit()
+                print("WebDriver closed.")
+                Actor.log.info("WebDriver closed.")
 
 if __name__ == "__main__":
     asyncio.run(main())
