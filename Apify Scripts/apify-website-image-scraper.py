@@ -3,27 +3,23 @@ import os
 from urllib.parse import urljoin
 import httpx
 from crawlee.crawlers import BeautifulSoupCrawler, BeautifulSoupCrawlingContext
+from crawlee.storages import KeyValueStore, Dataset
 from apify import Actor
 
 # Configuration
 START_URL = "https://apify.com/store"
-# For local execution
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(PROJECT_DIR, "downloaded_images")
-DATASET_FILE = os.path.join(PROJECT_DIR, "storage", "datasets", "default", "dataset.jsonl")
 
 async def main():
     async with Actor:
-        # For local execution: Create directories
-        if os.path.exists(PROJECT_DIR):  # Only for local runs
-            os.makedirs(OUTPUT_DIR, exist_ok=True)
-            os.makedirs(os.path.dirname(DATASET_FILE), exist_ok=True)
-
         # Initialize crawler
         crawler = BeautifulSoupCrawler(
             max_requests_per_crawl=100,
             max_request_retries=0,
         )
+        # Open Crawlee's storage
+        kv_store = await KeyValueStore.open()
+        dataset = await Dataset.open()
 
         @crawler.router.default_handler
         async def request_handler(context: BeautifulSoupCrawlingContext) -> None:
@@ -47,30 +43,23 @@ async def main():
                         response = await client.get(img_url, headers={"User-Agent": "Mozilla/5.0"})
                         response.raise_for_status()
 
-                    file_extension = img_url.split(".")[-1].split("?")[0][:4] or "jpg"
+                    # Get file extension from Content-Type
+                    content_type = response.headers.get("Content-Type", "image/jpeg")
+                    file_extension = content_type.split("/")[-1].split(";")[0]
                     file_name = f"image_{idx}_{context.request.id}.{file_extension}"
-                    file_path = os.path.join(OUTPUT_DIR, file_name)
 
-                    # For local execution: Save image
-                    if os.path.exists(PROJECT_DIR):
-                        with open(file_path, "wb") as f:
-                            f.write(response.content)
+                    # Store image in KeyValueStore
+                    await kv_store.set_value(file_name, response.content, content_type=content_type)
 
-                    # Push metadata to Apify dataset
+                    # Store metadata in Dataset
                     dataset_entry = {
                         "image_url": img_url,
-                        "file_name": f"images/{file_name}",
+                        "file_key": f"images/{file_name}",
                         "source_page": context.request.url,
                         "status": "success"
                     }
                     context.log.info(f"Pushing data: {dataset_entry}")
-                    await Actor.push_data(dataset_entry)
-
-                    # For local execution: Write to JSONL
-                    if os.path.exists(PROJECT_DIR):
-                        with open(DATASET_FILE, "a") as f:
-                            import json
-                            f.write(json.dumps(dataset_entry) + "\n")
+                    await dataset.push_data(dataset_entry)
 
                     context.log.info(f"Processed: {file_name}")
 
@@ -78,17 +67,13 @@ async def main():
                     context.log.error(f"Failed to download {img_url}: {e}")
                     dataset_entry = {
                         "image_url": img_url,
-                        "file_name": None,
+                        "file_key": None,
                         "source_page": context.request.url,
                         "status": "failed_download",
                         "error": str(e)
                     }
                     context.log.info(f"Pushing data: {dataset_entry}")
-                    await Actor.push_data(dataset_entry)
-                    if os.path.exists(PROJECT_DIR):
-                        with open(DATASET_FILE, "a") as f:
-                            import json
-                            f.write(json.dumps(dataset_entry) + "\n")
+                    await dataset.push_data(dataset_entry)
 
         # Run the crawler
         await crawler.run([START_URL])
