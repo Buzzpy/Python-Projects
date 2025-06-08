@@ -17,13 +17,10 @@ async def main():
         ####- Change: Replaced print() with Actor.log for platform-integrated logging.
         Actor.log.info('--- Craigslist Job Scraper ---')
 
-        ####- Change: Replaced hardcoded configuration with dynamic input from the Apify platform.
-        # This allows changing the URL and max items from the Apify UI.
-        actor_input = await Actor.get_input() or {}
-        base_url = actor_input.get("start_url", "https://newyork.craigslist.org/search/cps#search=2~thumb~0")
-        target_listings_count = actor_input.get("max_items", 50)
+        ####- Change: Configuration is now inside the main function. These values are hardcoded as requested.
+        base_url = "https://newyork.craigslist.org/search/cps#search=2~thumb~0"
+        target_listings_count = 50
         
-        ####- Change: Replaced print() with Actor.log.
         Actor.log.info('Initializing Selenium WebDriver...')
         selenium_options = Options()
         selenium_options.add_argument('--headless')
