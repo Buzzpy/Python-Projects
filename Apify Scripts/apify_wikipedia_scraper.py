@@ -8,14 +8,9 @@ async def main() -> None:
 
         actor_input = await Actor.get_input() or {}
         
-        start_urls_from_input = actor_input.get(
-            'start_urls',
-            [
-                {'url': 'https://en.wikipedia.org/wiki/Category:Programming_paradigms'},
-                {'url': 'https://en.wikipedia.org/wiki/Vibe_coding'},
-            ]
-        )
+        start_urls_from_input = actor_input.get('start_urls', [])
         max_pages = actor_input.get('max_pages', 20)
+
         
         start_urls = [item['url'] for item in start_urls_from_input]
 
